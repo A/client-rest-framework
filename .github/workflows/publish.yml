@@ -15,8 +15,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '19.x'
-          registry-url: 'https://registry.npmjs.org'
-          scope: 'shuvalov-anton'
       - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
       - run: yarn
       - run: yarn build
