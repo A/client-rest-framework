@@ -78,3 +78,36 @@ await repo.update(1, diff) // update user
 await repo.delete(1) // delete user
 
 ```
+
+
+## Serializers
+
+CRF supports next serializers:
+- `BaseSerializer` implements `readonly` and `many` behavior, each serializer should inherit from this one
+- `ModelSerializer` recursively serializes/deserializes data
+- `StringField`
+- `NumberField`
+- `BooleanField`
+- `DateField`
+- `EnumField<Union, Readonly, Many>`
+
+Serializers are classes implements `fromDTO` and `toDTO` methods. You can check simple `DateField` serializer below:
+
+```typescript
+class DateField<
+  R extends boolean = false,
+  M extends boolean = false
+> extends serializers.BaseSerializer<R, M> { // Extends from BaseSerializer to handle `readonly`/`many` properly
+  fromDTO = (data: string) => new Date(data); // serialization from DTO
+  toDTO = (data: Date) => new Date(data).toISOString();
+}
+```
+
+For more complex serializers, like `UserDTO`, there is a `ModelSerializer` class recursively resolves each defined serializer:
+
+```typescript
+export class PublicUserSerializer extends serializers.ModelSerializer<PublicUserDTO> {
+  name = serializers.StringField();
+  created_at = serializers.DateField({ readonly: true })
+}
+```
