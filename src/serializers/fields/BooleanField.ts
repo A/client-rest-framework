@@ -1,9 +1,10 @@
 import { BaseSerializer } from '../BaseSerializer';
 
-export class DateField<
+export  class BooleanField<
   R extends boolean = false,
   M extends boolean = false
 > extends BaseSerializer<R, M> {
-  fromDTO = (data: string) => new Date(data);
-  toDTO = (data: Date) => new Date(data).toISOString();
+  fromDTO = (data: any) => Boolean(data);
+  toDTO = (data: any) => Boolean(data);
 }
+

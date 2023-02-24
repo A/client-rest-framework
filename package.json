@@ -11,8 +11,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
-    "test": "jest",
-    "cov": "jest --collect-coverage"
+    "test": "jest"
   },
   "engines": {
     "node": ">=10"
