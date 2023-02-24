@@ -16,8 +16,8 @@ jobs:
         with:
           node-version: '19.x'
           registry-url: 'https://registry.npmjs.org'
-      # - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
+          scope: 'shuvalov-anton'
+      - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
       - run: yarn
       - run: yarn build
-      - name: Yarn Package Publish
-        uses: luvies/action-yarn-publish@v0.1.1
+      - run: yarn publish --access public --non-interactive
