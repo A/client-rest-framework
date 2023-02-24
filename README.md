@@ -1,5 +1,7 @@
 # client-rest-framework
 
+[![Build and Test](https://github.com/A/client-rest-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/A/client-rest-framework/actions/workflows/ci.yml)
+
 WORK IN PROGRESS.
 
 A framework to construct domain API repositories. Havily inspired by DRF ViewSets
