@@ -2,6 +2,7 @@ name: Build and Test
 
 on:
   push:
+    # only trigger on branches, not on tags
     branches: '*'
 
 jobs:
@@ -13,6 +14,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '19.x'
+          registry-url: 'https://registry.npmjs.org'
       - run: yarn
       - run: yarn build
       - run: yarn test
