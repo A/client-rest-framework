@@ -51,9 +51,10 @@ export class PublicUserSerializer extends serializers.ModelSerializer<PublicUser
   date_joined = new serializers.DateField({ readonly: true })
   notes = new serializers.StringField({})
   phone = new serializers.StringField({})
-  roles = new serializers.EnumField<RoleKey>({ many: true })
-  status = new serializers.EnumField<UserStatusKey>({})
-  categories = new serializers.EnumField<CategoryKey>({ many: true })
+  // ts limitation, pass Readonly and Many generics manually
+  roles = new serializers.EnumField<RoleKey, false, true>({ many: true })
+  status = new serializers.EnumField<UserStatusKey, false, false>({})
+  categories = new serializers.EnumField<CategoryKey, false, true>({ many: true })
 }
 
 // Example repository class
