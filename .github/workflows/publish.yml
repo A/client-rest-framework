@@ -16,9 +16,7 @@ jobs:
         with:
           node-version: '19.x'
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
+      - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
       - run: yarn
       - run: yarn build
       - run: yarn publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
