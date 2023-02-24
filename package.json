@@ -1,6 +1,6 @@
 {
   "name": "client-rest-framework",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "REST API framework to construct domain API repositories",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
