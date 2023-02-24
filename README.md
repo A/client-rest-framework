@@ -1,6 +1,7 @@
 # client-rest-framework
 
 [![Build and Test](https://github.com/A/client-rest-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/A/client-rest-framework/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/client-rest-framework.svg)](https://badge.fury.io/js/client-rest-framework)
 
 WORK IN PROGRESS.
 
