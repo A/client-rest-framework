@@ -1,4 +1,5 @@
 import merge from 'lodash.merge';
+import { WithPagination } from '../repositories';
 
 import { RequestContext } from '../types/RequestContext';
 
@@ -10,18 +11,6 @@ interface HTTPClient {
   delete: (...args: any) => any;
   patch: (...args: any) => any;
 }
-
-// interface PaginationContext {
-//   page: number;
-// }
-
-// export interface APIInterface<T extends any = any> {
-//   get(r: RequestContext): Promise<T>;
-//   create(r: RequestContext): Promise<T>;
-//   list(r: RequestContext): Promise<T[]>;
-//   update(r: RequestContext): Promise<T>;
-//   delete(r: RequestContext): Promise<void>;
-// }
 
 export class BaseRESTAPI {
   client: HTTPClient;
@@ -39,13 +28,6 @@ export class BaseRESTAPI {
 
   protected buildListURL = (request: RequestContext) => {
     const q = new URLSearchParams(request.queryParams as any);
-
-    // const { pagination } = request;
-    //
-    // if (pagination) {
-    //   q.set('page', String(pagination.page));
-    // }
-
     return `${this.url}/?${q.toString()}`;
   };
 
@@ -68,7 +50,7 @@ export class RESTAPI<T> extends BaseRESTAPI {
     return response.data;
   };
 
-  list = async (context: RequestContext): Promise<T[]> => {
+  list = async (context: RequestContext): Promise<WithPagination<T>> => {
     const url = this.buildListURL(context);
     const client = this.getHTTPClient();
     const response = await client.get(url);

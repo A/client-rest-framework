@@ -41,11 +41,15 @@ export class APIRepository<DTOItem> {
   }
 
   public async list(
+    page: number,
     config: Partial<RequestContext> = {}
-  ): Promise<ReturnType<this['serializer']['fromDTO']>[]> {
-    const context = this.api.createRequestContext(config)
-    const response = await this.api.list(context);
-    return response.map(this.serializer.fromDTO);
+  ): Promise<WithPagination<ReturnType<this['serializer']['fromDTO']>>> {
+    const context = this.api.createRequestContext({ queryParams: { page } }, config)
+    const response = await this.api.list(context) as any as WithPagination<DTOItem>;
+    return {
+      ...response,
+      results: response.results.map(this.serializer.fromDTO),
+    };
   }
 
   public async update(
