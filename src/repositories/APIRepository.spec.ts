@@ -3,6 +3,7 @@ import { assert, Equals } from 'tsafe';
 
 import { repositories, serializers } from '..';
 import { BaseRESTAPI } from '../api';
+import { PageNumberPagination, WithPagination } from '../paginations/PageNumberPagination';
 
 const USER = {
   name: 'Anton',
@@ -102,7 +103,7 @@ describe('Repositories', () => {
       assert<Equals<UpdateArgument, Partial<UserToDTO>>>();
     });
 
-    it('`repo.list` should return paginated parsed model', () => {
+    it('`repo.list` should return parsed model', () => {
       const repo = new UserRepository();
       type ListReturnType = Awaited<ReturnType<(typeof repo)['list']>>;
       assert<Equals<ListReturnType, User[]>>();
@@ -298,6 +299,33 @@ describe('Repositories', () => {
       });
     });
   })
+
+  describe("Pagination", () => {
+    class PaginatedAPI extends API {
+      // TODO: any;
+      list = jest.fn(async () => {
+        await sleep(20);
+        return { count: 1, results: [USER] };
+      }) as any
+    };
+    const api = new PaginatedAPI();
+    it("should return proper type for a paginated list", () => {
+      class UserRepository extends repositories.APIRepository<UserDTO> {
+        api = api
+        serializer = new UserSerializer();
+        pagination = new PageNumberPagination({
+          size: 50,
+        })
+      }
+
+      const repo = new UserRepository();
+      type ListReturnType = Awaited<ReturnType<(typeof repo)['list']>>;
+      assert<Equals<ListReturnType, WithPagination<User>>>();
+    })
+  })
+
+
+
   //
   // describe("pendingRequests", () => {
   //   class UserRepository extends repositories.APIRepository<UserDTO> {

@@ -14,9 +14,19 @@ interface SerializerInterface {
   toDTO: (arg: any) => any;
 }
 
+
+type Apply<T, K> = T<K>;
+
+type FromDTO<T extends SerializerInterface> = ReturnType<T['fromDTO']>[]
+
+interface PaginationInterface {
+  onResponse: (data: any) => any;
+}
+
 export class APIRepository<DTOItem> {
   protected api: api.RESTAPI<DTOItem>;
   serializer: SerializerInterface;
+  pagination: PaginationInterface | null = null;
 
   public async create(
     raw: Parameters<this['serializer']['toDTO']>[0],
@@ -42,7 +52,11 @@ export class APIRepository<DTOItem> {
 
   public async list(
     config: Partial<RequestContext> = {}
-  ): Promise<ReturnType<this['serializer']['fromDTO']>[]> {
+  ): Promise<
+    this["pagination"] extends null
+      ? FromDTO<this['serializer']>[]
+      : ReturnType<Apply<this["pagination"]["onResponse"], FromDTO<this["serializer"]>>>
+  > {
     const context = this.api.createRequestContext(config)
     const response = await this.api.list(context);
     return response.map(this.serializer.fromDTO);

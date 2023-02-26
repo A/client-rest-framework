@@ -39,13 +39,6 @@ export class BaseRESTAPI {
 
   protected buildListURL = (request: RequestContext) => {
     const q = new URLSearchParams(request.queryParams as any);
-
-    // const { pagination } = request;
-    //
-    // if (pagination) {
-    //   q.set('page', String(pagination.page));
-    // }
-
     return `${this.url}/?${q.toString()}`;
   };
 
