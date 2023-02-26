@@ -5,109 +5,145 @@
 
 WORK IN PROGRESS.
 
-A framework to construct domain API repositories. Havily inspired by DRF ViewSets
-and designed to have pretty close API to DRF. `client-rest-framework` provides
-API-clients, serializers to build domain entity repositories in minutes.
+# Introduction
+
+The `client-rest-framework` is a Typescript library that allows developers to create repositories to manage entities in a few lines of code, in a style similar to Django REST framework. The library provides APIs, serializers, and repositories that make it easy to interact with RESTful APIs and manage entities in a structured and efficient manner.
+
 
 ## Features
 
-- A collection of 2-direction serializers to create your own serialization
-  and deserialization logic
-- Support for custom serializers
-- Correct types based on defined serializers
-- Axios API from the box, and support for custom API classes
-- OOP design (hello DRF)
+- Powerful and flexible two-directional serializers for creating your own serialization and deserialization logic.
+- Support for custom serializers to tailor serialization to your specific needs.
+- Strongly-typed entities based on the defined serializers, providing type safety and avoiding common errors.
+- Built-in support for Axios API, with the ability to easily customize and use custom API classes.
+- Object-oriented design inspired by Django REST framework, making it easy to manage entities in a structured and efficient manner.
 
-## Example
+# Installation
 
-```ts
-import { repositories, serializers } from "client-api-framework";
+To install the `client-rest-framework`, run the following command:
 
-import { API } from "./api";
-import { CategoryKey, RoleKey, UserStatusKey } from "./types";
+`npm install client-rest-framework`
 
-export interface PublicUserDTO {
-  id: number;
-  username: string;
-  email: string;
-  display_name: string;
-  date_joined: string;
-  notes: string;
-  phone: string;
-  roles: RoleKey[];
-  status: UserStatusKey;
-  categories: CategoryKey[];
+# Usage
+
+To use the library, you need to import the `repositories` and `serializers` modules from the `client-rest-framework` package, and define your API endpoints, serializers, and repositories.
+
+## API
+
+To define an API, create a class that extends the `RESTAPI` class, provide an `HTTPClient` instance, and set the `url` property to the API endpoint URL. You can then pass this API to an `ApiRepository` as a realization of CRUD operations for the corresponding entity.
+
+Example API class:
+
+```typescript
+import { api } from "client-rest-framework";
+import { PublicUserDTO } from "./types"; 
+
+// Configure HTTPClient
+class HTTPClient extends api.AxiosHTTPClient {
+  getExtraHeaders() {
+    return { Authorization: `Bearer ${access}` };
+  }
+
+  onUnauthenticate = () => {
+    return;
+  }
 }
 
+class API<T> extends api.RESTAPI<T> {
+  client = new HTTPClient({
+    baseURL: BASE_URL
+  });
 
-// Example API supports get, create, update, list, delete methods against given URL
+}
+
 class PublicUserAPI extends API<PublicUserDTO> {
-  url = "/api/users";
+	url = "/api/users";
 }
-
-// Example serializer
-export class PublicUserSerializer extends serializers.ModelSerializer<PublicUserDTO> {
-  id = new serializers.NumberField({ readonly: true }),
-  username = new serializers.StringField({ readonly: true })
-  email = new serializers.StringField({ readonly: true })
-  display_name = new serializers.StringField({ readonly: true })
-  date_joined = new serializers.DateField({ readonly: true })
-  notes = new serializers.StringField({})
-  phone = new serializers.StringField({})
-  // ts limitation, pass Readonly and Many generics manually
-  roles = new serializers.EnumField<RoleKey, false, true>({ many: true })
-  status = new serializers.EnumField<UserStatusKey, false, false>({})
-  categories = new serializers.EnumField<CategoryKey, false, true>({ many: true })
-}
-
-// Example repository class
-export class PublicUserApiRepository extends repositories.APIRepository<PublicUserDTO> {
-  api = new PublicUserAPI();
-  serializer = new PublicUserSerializer();
-}
-
-// Infer resulting domain type from serializers
-export type PublicUser = ReturnType<PublicUserSerializer["fromDTO"]>
-
-// Usage
-const repo = new PublicUserApiRepository()
-await repo.list() // list users
-await repo.get(1) // get user
-await repo.create(user) // create user
-await repo.update(1, diff) // update user
-await repo.delete(1) // delete user
-
 ```
-
 
 ## Serializers
 
-CRF supports next serializers:
-- `BaseSerializer` implements `readonly` and `many` behavior, each serializer should inherit from this one
-- `ModelSerializer` recursively serializes/deserializes data
-- `StringField`
-- `NumberField`
-- `BooleanField`
-- `DateField`
-- `EnumField<Union, Readonly, Many>`
+Serializers are two-directional data-mappers that help to explicitly describe the domain model and to enforce its types in a simple case.
 
-Serializers are classes implements `fromDTO` and `toDTO` methods. You can check simple `DateField` serializer below:
+To define a serializer, create a class that extends the `ModelSerializer` class, and define fields for each attribute of the corresponding entity. You can use the `StringField`, `NumberField`, `BooleanField`, `DateField`, and `EnumField` classes to define different types of fields.
+
+Example serializer class:
 
 ```typescript
-class DateField<
-  R extends boolean = false,
-  M extends boolean = false
-> extends serializers.BaseSerializer<R, M> { // Extends from BaseSerializer to handle `readonly`/`many` properly
-  fromDTO = (data: string) => new Date(data); // serialization from DTO
-  toDTO = (data: Date) => new Date(data).toISOString();
+import { serializers } from "client-rest-framework"; 
+import { PublicUserDTO, RoleKey, UserStatusKey, CategoryKey } from "./types";  
+
+export class PublicUserSerializer extends ModelSerializer<PublicUserDTO> {
+	id = new serializers.NumberField({ readonly: true });
+	username = new serializers.StringField({ readonly: true });
+	email = new serializers.StringField({ readonly: true });
+	display_name = new serializers.StringField({ readonly: true });
+	date_joined = new serializers.DateField({ readonly: true });
+	notes = new serializers.StringField({});
+	phone = new serializers.StringField({});
+	// TS limutation, in this case you need to pass T, Readonly and Many generics explicitly:
+	roles = new serializers.EnumField<RoleKey, false, true>({ many: true });
+	status = new serializers.EnumField<UserStatusKey, false, false>({});
+	categories = new serializers.EnumField<CategoryKey, false, true>({ many: true });
 }
 ```
 
-For more complex serializers, like `UserDTO`, there is a `ModelSerializer` class recursively resolves each defined serializer:
+The library supports inferring the resulting domain type from the serializer class using the `ReturnType` type operator. You can use this to get the type of the entity returned by the repository's methods.
+
+Example:
 
 ```typescript
-export class PublicUserSerializer extends serializers.ModelSerializer<PublicUserDTO> {
-  name = serializers.StringField();
-  created_at = serializers.DateField({ readonly: true })
+export type PublicUser = ReturnType<PublicUserSerializer["fromDTO"]>
+```
+
+## Repositories
+
+To define a repository, create a class that extends the `APIRepository` class, and set the `api` property to an instance of the corresponding API class, and the `serializer` property to an instance of the corresponding serializer class.
+
+Example repository class:
+
+```typescript
+import { repositories } from "client-rest-framework"; 
+import { PublicUserDTO } from "./types";
+import { PublicUserAPI } from "./api";
+import { PublicUserSerializer } from "./serializers";
+
+export class PublicUserApiRepository extends repositories.APIRepository<PublicUserDTO> {
+	api = new PublicUserAPI();
+	serializer = new PublicUserSerializer();
 }
 ```
+
+## Using the repository
+
+You can now use the repository to interact with the API and manage entities.
+
+Example usage:
+
+```typescript
+import { PublicUserApiRepository } from "./repositories";
+import { PublicUser } from "./types";
+
+const publicUsersRepository = new PublicUserApiRepository();  
+
+
+// Get a user by ID 
+const user = await publicUsersRepository.get(1);
+
+// List all users
+const users = await publicUsersRepository.list();
+
+// Create a new user
+const user = await publicUsersRepository.create(data);
+
+// update a user
+const user = await publicUsersRepository.update(1, diff);
+
+// delete a user
+await repo.delete(1);
+```
+
+## Important Notes and Limitations
+
+- So far, list method works only with `rest_framework.pagination.PageNumberPagination` and expects this setting to be configured in DRF.
+- Package is in early alpha, interfaces may change
