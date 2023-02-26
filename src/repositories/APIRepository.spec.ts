@@ -2,6 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
 
 import { repositories, serializers } from '..';
+import { BaseRESTAPI } from '../api';
 
 const USER = {
   name: 'Anton',
@@ -29,27 +30,27 @@ interface UserToDTO {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const createApi = () => ({
-  get: jest.fn(async () => {
+class API extends BaseRESTAPI {
+  get = jest.fn(async () => {
     await sleep(20);
     return USER;
-  }),
-  create: jest.fn(async () => {
+  })
+  create = jest.fn(async () => {
     await sleep(20);
     return USER;
-  }),
-  update: jest.fn(async () => {
+  })
+  update = jest.fn(async () => {
     await sleep(20);
     return USER;
-  }),
-  list: jest.fn(async () => {
+  })
+  list = jest.fn(async () => {
     await sleep(20);
     return { count: 1, results: [USER] };
-  }),
-  delete: jest.fn(async () => {
+  })
+  delete = jest.fn(async () => {
     await sleep(20);
-  }),
-});
+  })
+};
 
 describe('Repositories', () => {
   class UserSerializer<
@@ -62,8 +63,7 @@ describe('Repositories', () => {
     created_at = new serializers.DateField({ readonly: true });
   }
 
-  const api = createApi();
-
+  const api = new API();
   class UserRepository extends repositories.APIRepository<UserDTO> {
     api = api;
     serializer = new UserSerializer();
@@ -105,7 +105,7 @@ describe('Repositories', () => {
     it('`repo.list` should return paginated parsed model', () => {
       const repo = new UserRepository();
       type ListReturnType = Awaited<ReturnType<(typeof repo)['list']>>;
-      assert<Equals<ListReturnType, repositories.WithPagination<User>>>();
+      assert<Equals<ListReturnType, { count: number; results: User[] }>>();
     });
 
     it('`repo.delete` should return void', () => {
@@ -121,115 +121,156 @@ describe('Repositories', () => {
     });
   });
 
-  it('get()', async () => {
-    const repo = new UserRepository();
-    const user = await repo.get(1);
+  describe("Basic", () => {
+    it('`repo.get`', async () => {
+      const repo = new UserRepository();
+      const user = await repo.get(1);
 
-    expect(user).toEqual({
-      name: 'Anton',
-      email: 'anton@anton.org',
-      created_at: new Date('2023-02-11T14:52:14.565Z'),
+      expect(user).toEqual({
+        name: 'Anton',
+        email: 'anton@anton.org',
+        created_at: new Date('2023-02-11T14:52:14.565Z'),
+      });
+
+      expect(api.get).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 1 } }));
     });
 
-    expect(api.get).toBeCalledWith({ urlParams: { pk: 1 } });
+    it('`repo.create`', async () => {
+      const repo = new UserRepository();
+      const user = await repo.create({
+        name: 'Anton',
+        email: 'anton',
+      });
+
+      expect(user).toEqual({
+        name: 'Anton',
+        email: 'anton@anton.org',
+        created_at: new Date('2023-02-11T14:52:14.565Z'),
+      });
+
+      expect(api.get).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 1 } }));
+    });
+
+    it('`repo.list`', async () => {
+      const repo = new UserRepository();
+      const users = await repo.list(1);
+
+      expect(users).toEqual({
+        count: 1,
+        results: [
+          {
+            name: 'Anton',
+            email: 'anton@anton.org',
+            created_at: new Date('2023-02-11T14:52:14.565Z'),
+          },
+        ]
+      });
+
+      expect(api.list).toBeCalled();
+    });
+
+    it('`repo.update`', async () => {
+      const repo = new UserRepository();
+      const user = await repo.update(1, {
+        name: 'Fin',
+      });
+
+      expect(user).toEqual({
+        name: 'Anton',
+        email: 'anton@anton.org',
+        created_at: new Date('2023-02-11T14:52:14.565Z'),
+      });
+
+      expect(api.update).toBeCalledWith(expect.objectContaining({
+        urlParams: { pk: 1 },
+        data: { name: 'Fin' },
+      }));
+    });
+
+    it('`repo.delete`', async () => {
+      const repo = new UserRepository();
+      expect(await repo.delete(1)).toBeUndefined();
+      expect(api.delete).toBeCalledWith(expect.objectContaining({
+        urlParams: { pk: 1 },
+      }));
+    });
   });
 
-  it('create()', async () => {
-    const repo = new UserRepository();
-    const user = await repo.create({
-      name: 'Anton',
-      email: 'anton',
+  describe("Request Config", () => {
+    it('`repo.get` should support request configuration', async () => {
+      const repo = new UserRepository();
+      const config = { queryParams: { a: 420 } };
+
+      await repo.get(1, config);
+
+      expect(api.get).toBeCalledWith({
+        urlParams: { pk: 1 },
+        queryParams: { a: 420 },
+        data: null,
+      });
     });
 
-    expect(user).toEqual({
-      name: 'Anton',
-      email: 'anton@anton.org',
-      created_at: new Date('2023-02-11T14:52:14.565Z'),
+    it('`repo.list` should support request configuration', async () => {
+      const repo = new UserRepository();
+      const config = { queryParams: { a: 420 } };
+
+      await repo.list(1, config);
+
+      expect(api.list).toBeCalledWith({
+        urlParams: {},
+        queryParams: { a: 420, page: 1, },
+        data: null,
+      });
     });
 
-    expect(api.get).toBeCalledWith({ urlParams: { pk: 1 } });
-  });
 
-  it('list()', async () => {
-    const repo = new UserRepository();
-    const users = await repo.list();
+    it('`repo.create` should support request configuration', async () => {
+      const repo = new UserRepository();
+      const config = { queryParams: { a: 420 } };
 
-    expect(users).toEqual({
-      count: 1,
-      results: [
-        {
+      await repo.create({
+        name: 'Anton',
+        email: 'anton',
+      }, config);
+
+      expect(api.create).toBeCalledWith({
+        urlParams: {},
+        queryParams: { a: 420 },
+        data: {
           name: 'Anton',
-          email: 'anton@anton.org',
-          created_at: new Date('2023-02-11T14:52:14.565Z'),
+          email: 'anton',
         },
-      ],
+      });
     });
 
-    expect(api.list).toBeCalled();
-  });
+    it('`repo.update` should support request configuration', async () => {
+      const repo = new UserRepository();
+      const config = { queryParams: { a: 420 } };
 
-  it('update()', async () => {
-    const repo = new UserRepository();
-    const user = await repo.update(1, {
-      name: 'Fin',
+      await repo.update(1, {
+        name: 'Anton',
+      }, config);
+
+      expect(api.update).toBeCalledWith({
+        urlParams: { pk: 1 },
+        queryParams: { a: 420 },
+        data: {
+          name: 'Anton',
+        },
+      });
     });
 
-    expect(user).toEqual({
-      name: 'Anton',
-      email: 'anton@anton.org',
-      created_at: new Date('2023-02-11T14:52:14.565Z'),
-    });
+    it('`repo.delete` should support request configuration', async () => {
+      const repo = new UserRepository();
+      const config = { queryParams: { a: 420 } };
 
-    expect(api.update).toBeCalledWith({
-      urlParams: { pk: 1 },
-      data: { name: 'Fin' },
-    });
-  });
+      await repo.delete(1, config);
 
-  it('delete()', async () => {
-    const repo = new UserRepository();
-    expect(await repo.delete(1)).toBeUndefined();
-    expect(api.delete).toBeCalledWith({
-      urlParams: { pk: 1 },
+      expect(api.delete).toBeCalledWith({
+        urlParams: { pk: 1 },
+        queryParams: { a: 420 },
+        data: null,
+      });
     });
-  });
-  //
-  // describe("pendingRequests", () => {
-  //   class UserRepository extends repositories.APIRepository<UserDTO> {
-  //     api = createApi()
-  //     serializer = new UserSerializer();
-  //   }
-  //
-  //   it.each([
-  //     { method: "get" },
-  //     { method: "list" },
-  //     { method: "create" },
-  //     { method: "update" },
-  //     { method: "delete" },
-  //   ])("Pending $method request should be tracked", async ({ method }) => {
-  //     const repo = new UserRepository();
-  //
-  //     // @ts-ignore
-  //     const p = repo[method]({});
-  //
-  //     expect(repo.hasPendingRequests()).toBeTruthy();
-  //     expect(repo.hasPendingRequests([method as any])).toBeTruthy();
-  //
-  //     await sleep(10)
-  //
-  //     // @ts-ignore
-  //     const p2 = repo[method]({});
-  //
-  //     await p
-  //
-  //     expect(repo.hasPendingRequests()).toBeTruthy();
-  //     expect(repo.hasPendingRequests([method as any])).toBeTruthy();
-  //
-  //     await p2
-  //
-  //     expect(repo.hasPendingRequests()).toBeFalsy();
-  //     expect(repo.hasPendingRequests([method as any])).toBeFalsy();
-  //   })
-  //
-  // })
+  })
 });
