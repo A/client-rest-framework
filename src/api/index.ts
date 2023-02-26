@@ -1,4 +1,6 @@
-import { WithPagination } from '../repositories';
+import merge from 'lodash.merge';
+
+import { RequestContext } from '../types/RequestContext';
 
 export * from './axiosClient';
 
@@ -9,84 +11,86 @@ interface HTTPClient {
   patch: (...args: any) => any;
 }
 
-export interface APIRequest<T extends any> {
-  urlParams?: Record<string, string | number>;
-  queryParams?: Record<string, string | number | boolean>;
-  data?: T;
-  pagination?: PaginationContext;
-}
+// interface PaginationContext {
+//   page: number;
+// }
 
-interface PaginationContext {
-  page: number;
-}
-
-export interface APIInterface<T extends any = any> {
-  get(r: APIRequest<T>): Promise<T>;
-  create(r: APIRequest<T>): Promise<T>;
-  list(r: APIRequest<T>): Promise<WithPagination<T>>;
-  update(r: APIRequest<T>): Promise<T>;
-  delete(r: APIRequest<T>): Promise<void>;
-}
+// export interface APIInterface<T extends any = any> {
+//   get(r: RequestContext): Promise<T>;
+//   create(r: RequestContext): Promise<T>;
+//   list(r: RequestContext): Promise<T[]>;
+//   update(r: RequestContext): Promise<T>;
+//   delete(r: RequestContext): Promise<void>;
+// }
 
 export class BaseRESTAPI {
   client: HTTPClient;
   url = '/';
 
-  protected buildListURL = (request: APIRequest<any>) => {
-    // TODO: convert query params
-
-    const q = new URLSearchParams(request.queryParams as any);
-    const { pagination } = request;
-
-    if (pagination) {
-      q.set('page', String(pagination.page));
+  public createRequestContext = (...contexts: Partial<RequestContext>[]) => {
+    const defaultContext = {
+      urlParams: {},
+      queryParams: {},
+      data: null,
     }
+
+    return merge(defaultContext, ...contexts) as RequestContext;
+  }
+
+  protected buildListURL = (request: RequestContext) => {
+    const q = new URLSearchParams(request.queryParams as any);
+
+    // const { pagination } = request;
+    //
+    // if (pagination) {
+    //   q.set('page', String(pagination.page));
+    // }
 
     return `${this.url}/?${q.toString()}`;
   };
 
-  protected buildDetailURL = (request: APIRequest<any>) => {
-    if (!request.urlParams?.pk) {
+  protected buildDetailURL = (context: RequestContext) => {
+    if (!context.urlParams?.pk) {
       throw new Error("Datail URL can't be built without `pk`");
     }
 
-    return `${this.url}/${request.urlParams.pk}`;
+    return `${this.url}/${context.urlParams.pk}`;
   };
 
   protected getHTTPClient = () => this.client;
 }
 
 export class RESTAPI<T> extends BaseRESTAPI {
-  get = async (request: APIRequest<T>): Promise<T> => {
-    const url = this.buildDetailURL(request);
+  get = async (context: RequestContext): Promise<T> => {
+    const url = this.buildDetailURL(context);
     const client = this.getHTTPClient();
     const response = await client.get(url);
     return response.data;
   };
 
-  list = async (request: APIRequest<T>): Promise<WithPagination<T>> => {
-    const url = this.buildListURL(request);
+  list = async (context: RequestContext): Promise<T[]> => {
+    const url = this.buildListURL(context);
     const client = this.getHTTPClient();
     const response = await client.get(url);
     return response.data;
   };
 
-  create = async (request: APIRequest<T>): Promise<T> => {
-    const url = this.buildListURL(request);
+  create = async (context: RequestContext): Promise<T> => {
+    const url = this.buildListURL(context);
     const client = this.getHTTPClient();
-    const response = await client.post(url, request.data);
+    const response = await client.post(url, context.data);
     return response.data;
   };
 
-  update = async (request: APIRequest<T>): Promise<T> => {
-    const url = this.buildDetailURL(request);
+  update = async (context: RequestContext): Promise<T> => {
+    const url = this.buildDetailURL(context);
     const client = this.getHTTPClient();
-    const response = await client.patch(url, request.data);
+    const response = await client.patch(url, context.data);
     return response.data;
   };
 
-  delete = async (request: APIRequest<T>): Promise<void> => {
-    const url = this.buildDetailURL(request);
+  delete = async (context: RequestContext): Promise<void> => {
+    const url = this.buildDetailURL(context);
     const client = this.getHTTPClient();
     await client.delete(url);
   };
