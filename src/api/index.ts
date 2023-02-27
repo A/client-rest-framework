@@ -36,7 +36,7 @@ export class BaseRESTAPI {
       throw new Error("Datail URL can't be built without `pk`");
     }
 
-    return `${this.url}/${context.urlParams.pk}`;
+    return `${this.url}/${context.urlParams.pk}/`;
   };
 
   protected getHTTPClient = () => this.client;
