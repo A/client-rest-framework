@@ -1,4 +1,3 @@
-import { api } from '..';
 import { RequestContext } from '../types/RequestContext';
 
 export interface WithPagination<T> {
@@ -6,7 +5,16 @@ export interface WithPagination<T> {
   count: number;
 }
 
-interface SerializerInterface {
+interface IAPI {
+  createRequestContext(...args: Partial<RequestContext>[]): RequestContext
+  get(context: RequestContext): any
+  list(context: RequestContext): any
+  create(context: RequestContext): any
+  update(context: RequestContext): any
+  delete(context: RequestContext): any
+}
+
+interface ISerializer {
   many: boolean;
   readonly: boolean;
 
@@ -14,9 +22,9 @@ interface SerializerInterface {
   toDTO: (arg: any) => any;
 }
 
-export class APIRepository<DTOItem> {
-  protected api: api.RESTAPI<DTOItem>;
-  serializer: SerializerInterface;
+export class APIRepository {
+  api: IAPI;
+  serializer: ISerializer;
 
   public async create(
     raw: Parameters<this['serializer']['toDTO']>[0],
@@ -41,15 +49,14 @@ export class APIRepository<DTOItem> {
   }
 
   public async list(
-    page: number,
+    page = 1,
     config: Partial<RequestContext> = {}
-  ): Promise<WithPagination<ReturnType<this['serializer']['fromDTO']>>> {
+  ) {
+    type SerializedItem = ReturnType<this['serializer']['fromDTO']>
     const context = this.api.createRequestContext({ queryParams: { page } }, config)
-    const response = await this.api.list(context) as any as WithPagination<DTOItem>;
-    return {
-      ...response,
-      results: response.results.map(this.serializer.fromDTO),
-    };
+    const { items, ...meta } = await this.api.list(context) as Awaited<ReturnType<this['api']['list']>>
+    const serializedItems = items.map(this.serializer.fromDTO) as SerializedItem[]
+    return [serializedItems, meta] as [SerializedItem[], typeof meta]
   }
 
   public async update(
