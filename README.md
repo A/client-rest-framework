@@ -35,7 +35,7 @@ To define an API, create a class that extends the `RESTAPI` class, provide an `H
 Example API class:
 
 ```typescript
-import { api } from "client-rest-framework";
+import { api, pagination } from "client-rest-framework";
 import { PublicUserDTO } from "./types"; 
 
 // Configure HTTPClient
@@ -57,6 +57,7 @@ class API<T> extends api.RESTAPI<T> {
 }
 
 class PublicUserAPI extends API<PublicUserDTO> {
+  pagination = pagination.PageNumberPagination<PublicUserDTO>()
 	url = "/api/users";
 }
 ```
@@ -108,7 +109,7 @@ import { PublicUserDTO } from "./types";
 import { PublicUserAPI } from "./api";
 import { PublicUserSerializer } from "./serializers";
 
-export class PublicUserApiRepository extends repositories.APIRepository<PublicUserDTO> {
+export class PublicUserApiRepository extends repositories.APIRepository {
 	api = new PublicUserAPI();
 	serializer = new PublicUserSerializer();
 }

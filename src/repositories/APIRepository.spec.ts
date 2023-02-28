@@ -2,7 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
 
 import { repositories, serializers } from '..';
-import { BaseRESTAPI } from '../api';
+import { RESTAPI } from '../api';
+import { pagination } from '..';
 
 const USER = {
   name: 'Anton',
@@ -30,26 +31,30 @@ interface UserToDTO {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-class API extends BaseRESTAPI {
+class HTTPClient {
   get = jest.fn(async () => {
     await sleep(20);
-    return USER;
+    return { data: USER };
   })
-  create = jest.fn(async () => {
+  post = jest.fn(async () => {
     await sleep(20);
-    return USER;
+    return { data: USER };
   })
-  update = jest.fn(async () => {
+  patch = jest.fn(async () => {
     await sleep(20);
-    return USER;
-  })
-  list = jest.fn(async () => {
-    await sleep(20);
-    return { count: 1, results: [USER] };
+    return { data: USER };
   })
   delete = jest.fn(async () => {
     await sleep(20);
+    return;
   })
+}
+
+const client = new HTTPClient()
+
+class API<DTO> extends RESTAPI<DTO> {
+  pagination = new pagination.PageNumberPagination<DTO>()
+  client = client
 };
 
 describe('Repositories', () => {
@@ -63,8 +68,8 @@ describe('Repositories', () => {
     created_at = new serializers.DateField({ readonly: true });
   }
 
-  const api = new API();
-  class UserRepository extends repositories.APIRepository<UserDTO> {
+  const api = new API<UserDTO>();
+  class UserRepository extends repositories.APIRepository {
     api = api;
     serializer = new UserSerializer();
   }
@@ -102,10 +107,16 @@ describe('Repositories', () => {
       assert<Equals<UpdateArgument, Partial<UserToDTO>>>();
     });
 
-    it('`repo.list` should return paginated parsed model', () => {
+    it('`repo.list` should return paginated parsed model', async () => {
+      client.get.mockImplementationOnce(async () => {
+        await sleep(20);
+        return { data: { results: [USER], count: 1 } } as any
+      })
+
       const repo = new UserRepository();
-      type ListReturnType = Awaited<ReturnType<(typeof repo)['list']>>;
-      assert<Equals<ListReturnType, { count: number; results: User[] }>>();
+      const [users, meta] = await repo.list()
+      assert<Equals<typeof users, User[]>>();
+      assert<Equals<typeof meta, { count: number }>>();
     });
 
     it('`repo.delete` should return void', () => {
@@ -124,7 +135,9 @@ describe('Repositories', () => {
   describe("Basic", () => {
     it('`repo.get`', async () => {
       const repo = new UserRepository();
-      const user = await repo.get(1);
+      const spy = jest.spyOn(repo.api, 'get');
+
+      const user = await repo.get(2);
 
       expect(user).toEqual({
         name: 'Anton',
@@ -132,11 +145,12 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(api.get).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 1 } }));
+      expect(spy).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 2 } }));
     });
 
     it('`repo.create`', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'create');
       const user = await repo.create({
         name: 'Anton',
         email: 'anton',
@@ -148,29 +162,34 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(api.get).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 1 } }));
+      expect(spy).toBeCalledWith(expect.objectContaining({ data: { name: "Anton", email: "anton" } }));
     });
 
     it('`repo.list`', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'get');
+      client.get.mockImplementationOnce(async () => {
+        await sleep(20);
+        return { data: { results: [USER], count: 1 } } as any
+      })
+
       const users = await repo.list(1);
 
-      expect(users).toEqual({
-        count: 1,
-        results: [
-          {
-            name: 'Anton',
-            email: 'anton@anton.org',
-            created_at: new Date('2023-02-11T14:52:14.565Z'),
-          },
-        ]
-      });
+      expect(users).toEqual([
+        [{
+          name: 'Anton',
+          email: 'anton@anton.org',
+          created_at: new Date('2023-02-11T14:52:14.565Z'),
+        }],
+        { count: 1, },
+      ]);
 
-      expect(api.list).toBeCalled();
+      expect(spy).toBeCalled();
     });
 
     it('`repo.update`', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'update');
       const user = await repo.update(1, {
         name: 'Fin',
       });
@@ -181,7 +200,7 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(api.update).toBeCalledWith(expect.objectContaining({
+      expect(spy).toBeCalledWith(expect.objectContaining({
         urlParams: { pk: 1 },
         data: { name: 'Fin' },
       }));
@@ -189,8 +208,9 @@ describe('Repositories', () => {
 
     it('`repo.delete`', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'delete');
       expect(await repo.delete(1)).toBeUndefined();
-      expect(api.delete).toBeCalledWith(expect.objectContaining({
+      expect(spy).toBeCalledWith(expect.objectContaining({
         urlParams: { pk: 1 },
       }));
     });
@@ -200,11 +220,13 @@ describe('Repositories', () => {
     it('`repo.get` should support request configuration', async () => {
       const repo = new UserRepository();
       const config = { queryParams: { a: 420 } };
+      const spy = jest.spyOn(repo.api, 'get');
 
       await repo.get(1, config);
 
-      expect(api.get).toBeCalledWith({
+      expect(spy).toBeCalledWith({
         urlParams: { pk: 1 },
+        pagination: {},
         queryParams: { a: 420 },
         data: null,
       });
@@ -212,13 +234,19 @@ describe('Repositories', () => {
 
     it('`repo.list` should support request configuration', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'list');
       const config = { queryParams: { a: 420 } };
+      client.get.mockImplementationOnce(async () => {
+        await sleep(20);
+        return { data: { results: [USER], count: 1 } } as any
+      })
 
       await repo.list(1, config);
 
-      expect(api.list).toBeCalledWith({
+      expect(spy).toBeCalledWith({
         urlParams: {},
-        queryParams: { a: 420, page: 1, },
+        pagination: {},
+        queryParams: { a: 420, page: 1, page_size: 50 },
         data: null,
       });
     });
@@ -227,14 +255,16 @@ describe('Repositories', () => {
     it('`repo.create` should support request configuration', async () => {
       const repo = new UserRepository();
       const config = { queryParams: { a: 420 } };
+      const spy = jest.spyOn(repo.api, 'create');
 
       await repo.create({
         name: 'Anton',
         email: 'anton',
       }, config);
 
-      expect(api.create).toBeCalledWith({
+      expect(spy).toBeCalledWith({
         urlParams: {},
+        pagination: {},
         queryParams: { a: 420 },
         data: {
           name: 'Anton',
@@ -245,14 +275,16 @@ describe('Repositories', () => {
 
     it('`repo.update` should support request configuration', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'update');
       const config = { queryParams: { a: 420 } };
 
       await repo.update(1, {
         name: 'Anton',
       }, config);
 
-      expect(api.update).toBeCalledWith({
+      expect(spy).toBeCalledWith({
         urlParams: { pk: 1 },
+        pagination: {},
         queryParams: { a: 420 },
         data: {
           name: 'Anton',
@@ -262,12 +294,14 @@ describe('Repositories', () => {
 
     it('`repo.delete` should support request configuration', async () => {
       const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'delete');
       const config = { queryParams: { a: 420 } };
 
       await repo.delete(1, config);
 
-      expect(api.delete).toBeCalledWith({
+      expect(spy).toBeCalledWith({
         urlParams: { pk: 1 },
+        pagination: {},
         queryParams: { a: 420 },
         data: null,
       });
