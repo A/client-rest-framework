@@ -41,11 +41,13 @@ export class BaseAPI {
   }
 
   protected buildListURL = (request: RequestContext) => {
+    const tailingSlash = this.options.appendSlash ? "/" : ""
+
     const q = new URLSearchParams(request.queryParams as any);
     const qs = q.toString()
     return qs.length > 0
       ? `${this.url}/?${q.toString()}`
-      : this.url
+      : `${this.url}${tailingSlash}`
   };
 
   protected buildDetailURL = (context: RequestContext) => {

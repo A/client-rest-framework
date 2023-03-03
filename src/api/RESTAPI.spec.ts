@@ -72,7 +72,7 @@ describe('RESTAPI', () => {
     expect(response).toEqual({
       items: [{ name: "anton" }]
     });
-    expect(client.get).toBeCalledWith("/users")
+    expect(client.get).toBeCalledWith("/users/")
   })
 
   it('`RESTAPI.list` with PageNumberPagination', async () => {
@@ -99,7 +99,7 @@ describe('RESTAPI', () => {
       count: 1,
       items: [{ name: "anton" }]
     });
-    expect(client.get).toBeCalledWith("/users")
+    expect(client.get).toBeCalledWith("/users/")
   })
 
   it('`RESTAPI.create`', async () => {
@@ -114,7 +114,7 @@ describe('RESTAPI', () => {
 
     assert<Equals<typeof user, DTO>>();
     expect(user).toEqual(USER);
-    expect(client.post).toBeCalledWith("/users", { name: "anton" })
+    expect(client.post).toBeCalledWith("/users/", { name: "anton" })
   })
 
   it('`RESTAPI.update`', async () => {
