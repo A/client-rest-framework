@@ -22,8 +22,14 @@ export class PageNumberPagination<DTO> {
       page: 1,
       pageSize: this.options.pageSize
     }
+
     Object.assign(pagination, context.pagination);
     context.queryParams = context.queryParams || {}
+
+    if (Boolean(context.queryParams[this.options.pageSizeQueryParam])) {
+      pagination.pageSize = context.queryParams[this.options.pageSizeQueryParam] as number
+    }
+
     context.queryParams[this.options.pageQueryParam] = pagination.page
     context.queryParams[this.options.pageSizeQueryParam] = pagination.pageSize
     return context

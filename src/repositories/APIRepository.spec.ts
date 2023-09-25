@@ -254,7 +254,7 @@ describe('Repositories', () => {
     it('`repo.list` should support pagination', async () => {
       const repo = new UserRepository();
       const spy = jest.spyOn(repo.api, 'list');
-      const config = { queryParams: { a: 420 } };
+      const config = { queryParams: { a: 420, page_size: 20 } };
       client.get.mockImplementationOnce(async () => {
         await sleep(20);
         return { data: { results: [USER], count: 1 } } as any
@@ -265,7 +265,7 @@ describe('Repositories', () => {
       expect(spy).toBeCalledWith({
         urlParams: {},
         pagination: { page: 5 },
-        queryParams: { a: 420, page: 5, page_size: 50 },
+        queryParams: { a: 420, page: 5, page_size: 20 },
         data: null,
       });
     });
