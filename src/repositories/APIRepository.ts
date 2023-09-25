@@ -53,7 +53,7 @@ export class APIRepository {
     config: Partial<RequestContext> = {}
   ) {
     type SerializedItem = ReturnType<this['serializer']['fromDTO']>
-    const context = this.api.createRequestContext({ queryParams: { page } }, config)
+    const context = this.api.createRequestContext({ pagination: { page } }, config)
     const { items, ...meta } = await this.api.list(context) as Awaited<ReturnType<this['api']['list']>>
     const serializedItems = items.map(this.serializer.fromDTO) as SerializedItem[]
     return [serializedItems, meta] as [SerializedItem[], typeof meta]

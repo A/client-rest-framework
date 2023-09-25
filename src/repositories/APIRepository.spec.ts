@@ -245,12 +245,30 @@ describe('Repositories', () => {
 
       expect(spy).toBeCalledWith({
         urlParams: {},
-        pagination: {},
+        pagination: { page: 1 },
         queryParams: { a: 420, page: 1, page_size: 50 },
         data: null,
       });
     });
 
+    it('`repo.list` should support pagination', async () => {
+      const repo = new UserRepository();
+      const spy = jest.spyOn(repo.api, 'list');
+      const config = { queryParams: { a: 420 } };
+      client.get.mockImplementationOnce(async () => {
+        await sleep(20);
+        return { data: { results: [USER], count: 1 } } as any
+      })
+
+      await repo.list(5, config);
+
+      expect(spy).toBeCalledWith({
+        urlParams: {},
+        pagination: { page: 5 },
+        queryParams: { a: 420, page: 5, page_size: 50 },
+        data: null,
+      });
+    });
 
     it('`repo.create` should support request configuration', async () => {
       const repo = new UserRepository();
