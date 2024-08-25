@@ -68,6 +68,11 @@ export class ModelSerializer<
     for (const key in data) {
       const serializer = this[key as keyof this] as BaseSerializer<R, M>;
 
+      if (!serializer) {
+        console.warn(`Serializer hasn't been found for field "${key}"`)
+        continue
+      }
+
       if (serializer.readonly) {
         continue;
       }

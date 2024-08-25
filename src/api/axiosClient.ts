@@ -47,7 +47,10 @@ export class AxiosHTTPClient {
     log(`Post ${uri} with data ${JSON.stringify(data)}`);
     return this.api.post<T>(uri, data, {
       ...config,
-      headers: this.getExtraHeaders(),
+      headers: {
+        ...config.headers,
+        ...this.getExtraHeaders(),
+      }
     });
   }
 
