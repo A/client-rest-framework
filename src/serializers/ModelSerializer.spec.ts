@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
 
 import { BaseSerializer } from './BaseSerializer';
@@ -105,5 +105,20 @@ describe('ModelSerializer', () => {
       score: 420,
       tags: ['paid'],
     });
+  });
+
+  it('toDTO with unknown keys', () => {
+    const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation(jest.fn());
+
+    new UserSerializer().toDTO({
+      name: 'Anton',
+      email: 'anton@anton.org',
+      score: '420',
+      unknown: 'value',
+      tags: [{ name: 'paid' }],
+      created_at: new Date('2023-02-11T14:52:14.565Z'),
+    } as any)
+
+    expect(consoleWarnMock).toHaveBeenCalledWith('Serializer hasn\'t been found for field "unknown"')
   });
 });
