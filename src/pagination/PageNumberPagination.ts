@@ -1,4 +1,5 @@
-import { RequestContext } from "../types/RequestContext";
+import { RequestContext } from "../lib/RequestContextBuilder";
+
 
 interface PageNumberPaginationOptions {
   pageSize: number

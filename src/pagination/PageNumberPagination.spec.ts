@@ -71,16 +71,16 @@ describe('PageNumberPagination', () => {
     {
       name: "custom pageSize and page context parameters",
       options: {},
-      context: { pagination: { page: 5, pageSize: 10} },
+      context: { pagination: { page: 5, pageSize: 10 } },
       expectedURL: "/users/?page=5&page_size=10"
     },
     {
       name: "mixed context and constructor parameters",
       options: { pageSize: 10, pageQueryParam: "p", pageSizeQueryParam: "s" },
-      context: { pagination: { page: 8, pageSize: 20} },
+      context: { pagination: { page: 8, pageSize: 20 } },
       expectedURL: "/users/?p=8&s=20"
     },
-  ])('$name', async ({ options, context, expectedURL}) => {
+  ])('$name', async ({ options, context, expectedURL }) => {
     class API extends RESTAPI<DTO> {
       client = client as any
       pagination = new PageNumberPagination<DTO>(options)
