@@ -1,7 +1,4 @@
-import merge from 'lodash.merge';
-
-import { RequestContext } from '../types/RequestContext';
-
+import { UrlBuilder } from '../lib/UrlBuilder';
 
 interface HTTPClient {
   get: (...args: any) => any;
@@ -10,53 +7,21 @@ interface HTTPClient {
   patch: (...args: any) => any;
 }
 
-
-interface BaseRESTAPIOptions {
+interface BaseAPIOptions {
   /** If true, adds slash into detail api url */
   appendSlash: boolean
 }
 
 
 export class BaseAPI {
-  options: BaseRESTAPIOptions = {
-    appendSlash: true,
-  }
-
   client: HTTPClient;
+  urlBuilder: UrlBuilder;
   url = '/';
 
-  constructor(options: Partial<BaseRESTAPIOptions> = {}) {
-    Object.assign(this.options, options);
+  constructor(options: Partial<BaseAPIOptions> = {}) {
+    this.urlBuilder = new UrlBuilder({
+      appendSlash: options.appendSlash,
+      url: () => this.url,
+    })
   }
-
-  public createRequestContext = (...contexts: Partial<RequestContext>[]) => {
-    const defaultContext = {
-      urlParams: {},
-      queryParams: {},
-      pagination: {},
-      data: null,
-    }
-
-    return merge(defaultContext, ...contexts) as RequestContext;
-  }
-
-  protected buildListURL = (request: RequestContext) => {
-    const tailingSlash = this.options.appendSlash ? "/" : ""
-
-    const q = new URLSearchParams(request.queryParams as any);
-    const qs = q.toString()
-    return qs.length > 0
-      ? `${this.url}/?${q.toString()}`
-      : `${this.url}${tailingSlash}`
-  };
-
-  protected buildDetailURL = (context: RequestContext) => {
-    const tailingSlash = this.options.appendSlash ? "/" : ""
-
-    if (!context.urlParams?.pk) {
-      throw new Error("Datail URL can't be built without `pk`");
-    }
-
-    return `${this.url}/${context.urlParams.pk}${tailingSlash}`;
-  };
 }
