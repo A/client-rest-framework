@@ -103,7 +103,7 @@ describe('Repositories', () => {
       const repo = new UserRepository();
       type ID = Parameters<(typeof repo)['update']>[0];
       type UpdateArgument = Parameters<(typeof repo)['update']>[1];
-      assert<Equals<ID, number>>();
+      assert<Equals<ID, number | string>>();
       assert<Equals<UpdateArgument, Partial<UserToDTO>>>();
     });
 
@@ -128,7 +128,7 @@ describe('Repositories', () => {
     it('`repo.delete` should accept correct argument', () => {
       const repo = new UserRepository();
       type ID = Parameters<(typeof repo)['delete']>[0];
-      assert<Equals<ID, number>>();
+      assert<Equals<ID, number | string>>();
     });
   });
 
