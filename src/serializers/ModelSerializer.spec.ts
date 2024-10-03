@@ -31,8 +31,9 @@ interface ToDTOUserParameter {
 describe('ModelSerializer', () => {
   class TagSerializer<
     R extends boolean = false,
-    M extends boolean = false
-  > extends BaseSerializer<R, M> {
+    M extends boolean = false,
+    O extends boolean = false,
+  > extends BaseSerializer<R, M, O> {
     fromDTO = (tag: string) => ({ name: tag });
     toDTO = (tag: ReturnType<this['fromDTO']>) => tag.name;
   }
@@ -45,6 +46,8 @@ describe('ModelSerializer', () => {
     email = new StringField();
     score = new NumberField();
     tags = new TagSerializer({ many: true });
+    tags_optional = new TagSerializer({ many: true, optional: true });
+    phone = new StringField({ optional: true });
     created_at = new DateField({ readonly: true });
   }
 

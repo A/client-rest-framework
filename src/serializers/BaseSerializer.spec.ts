@@ -8,11 +8,13 @@ describe('BaseSerializer', () => {
     const serializer = new BaseSerializer();
     assert<Equals<(typeof serializer)['readonly'], false>>();
     assert<Equals<(typeof serializer)['many'], false>>();
+    assert<Equals<(typeof serializer)['optional'], false>>();
   });
 
   it('should properly set options as consts', () => {
-    const serializer = new BaseSerializer({ many: true, readonly: true });
+    const serializer = new BaseSerializer({ many: true, readonly: true, optional: true });
     assert<Equals<(typeof serializer)['readonly'], true>>();
     assert<Equals<(typeof serializer)['many'], true>>();
+    assert<Equals<(typeof serializer)['optional'], true>>();
   });
 });

@@ -4,10 +4,12 @@
  */
 export class BaseSerializer<
   R extends boolean = false,
-  M extends boolean = false
+  M extends boolean = false,
+  O extends boolean = false,
 > {
   readonly readonly: R;
   readonly many: M;
+  readonly optional: O;
 
   constructor(
     options: {
@@ -15,9 +17,11 @@ export class BaseSerializer<
       readonly?: R;
       /** Apply serializer to an array of values */
       many?: M;
+      /** Nullable field */
+      optional?: O;
     } = {}
   ) {
-    Object.assign(this, { many: false, readonly: false }, options);
+    Object.assign(this, { many: false, readonly: false, optional: false }, options);
   }
 
   /** Converts data transfer objects into models */
