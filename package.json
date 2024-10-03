@@ -1,10 +1,9 @@
 {
   "name": "client-rest-framework",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "REST API framework to construct domain API repositories",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
-  "module": "build/module/index.js",
   "repository": "https://github.com/A/client-rest-framework",
   "license": "MIT",
   "keywords": [],
