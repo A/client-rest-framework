@@ -1,6 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
-import { serializers } from '../..';
 
 import { BooleanField } from './BooleanField';
 
@@ -12,7 +11,11 @@ describe('BooleanField', () => {
   });
 
   it('should properly set options as consts', () => {
-    const serializer = new BooleanField({ many: true, readonly: true, optional: true });
+    const serializer = new BooleanField({
+      many: true,
+      readonly: true,
+      optional: true,
+    });
     assert<Equals<(typeof serializer)['readonly'], true>>();
     assert<Equals<(typeof serializer)['many'], true>>();
     assert<Equals<(typeof serializer)['optional'], true>>();
@@ -38,4 +41,3 @@ describe('BooleanField', () => {
     expect(res).toEqual(expected);
   });
 });
-

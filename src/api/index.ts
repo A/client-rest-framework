@@ -1,3 +1,2 @@
 export * from './axiosClient';
-export * from './BaseAPI'
-export * from './RESTAPI'
+export * from './RESTAPI';

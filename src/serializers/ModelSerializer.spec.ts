@@ -16,8 +16,10 @@ interface UserDTO {
 interface User {
   name: string;
   email: string;
+  phone: string | null;
   score: number;
   tags: { name: string }[];
+  tags_optional: { name: string }[] | null;
   created_at: Date;
 }
 
@@ -26,13 +28,15 @@ interface ToDTOUserParameter {
   email: string;
   score: number;
   tags: { name: string }[];
+  tags_optional: { name: string }[] | null | undefined;
+  phone: string | null | undefined;
 }
 
 describe('ModelSerializer', () => {
   class TagSerializer<
     R extends boolean = false,
     M extends boolean = false,
-    O extends boolean = false,
+    O extends boolean = false
   > extends BaseSerializer<R, M, O> {
     fromDTO = (tag: string) => ({ name: tag });
     toDTO = (tag: ReturnType<this['fromDTO']>) => tag.name;
@@ -111,7 +115,9 @@ describe('ModelSerializer', () => {
   });
 
   it('toDTO with unknown keys', () => {
-    const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation(jest.fn());
+    const consoleWarnMock = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(jest.fn());
 
     new UserSerializer().toDTO({
       name: 'Anton',
@@ -120,8 +126,10 @@ describe('ModelSerializer', () => {
       unknown: 'value',
       tags: [{ name: 'paid' }],
       created_at: new Date('2023-02-11T14:52:14.565Z'),
-    } as any)
+    } as any);
 
-    expect(consoleWarnMock).toHaveBeenCalledWith('Serializer hasn\'t been found for field "unknown"')
+    expect(consoleWarnMock).toHaveBeenCalledWith(
+      'Serializer hasn\'t been found for field "unknown"'
+    );
   });
 });

@@ -7,7 +7,6 @@ export interface RequestContext {
   pagination?: Record<string, any>;
 }
 
-
 /**
  * This class is responsible for building universal
  * request context, which can be processed by API
@@ -16,18 +15,17 @@ export interface RequestContext {
  * TODO: Current implementation is attached to axios and should be refactored
  */
 export class RequestContextBuilder {
-
   private createDefaultContext = () => {
     return {
       urlParams: {},
       queryParams: {},
       pagination: {},
       data: null,
-    }
-  }
+    };
+  };
 
   create = (...contexts: Partial<RequestContext>[]) => {
-    const defaultContext = this.createDefaultContext()
+    const defaultContext = this.createDefaultContext();
     return merge(defaultContext, ...contexts) as RequestContext;
-  }
+  };
 }

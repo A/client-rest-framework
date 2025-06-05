@@ -17,6 +17,6 @@ jobs:
           node-version: '19.x'
       - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NODE_AUTH_TOKEN }}" > ~/.npmrc
       - run: cat ~/.npmrc
-      - run: yarn
-      - run: yarn build
+      - run: npm install
+      - run: npm run build
       - run: npm publish
