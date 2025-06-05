@@ -53,12 +53,11 @@ class API<T> extends api.RESTAPI<T> {
   client = new HTTPClient({
     baseURL: BASE_URL
   });
-
 }
 
 class PublicUserAPI extends API<PublicUserDTO> {
   pagination = pagination.PageNumberPagination<PublicUserDTO>()
-	url = "/api/users";
+  url = "/api/users";
 }
 ```
 
@@ -75,17 +74,17 @@ import { serializers } from "client-rest-framework";
 import { PublicUserDTO, RoleKey, UserStatusKey, CategoryKey } from "./types";  
 
 export class PublicUserSerializer extends ModelSerializer<PublicUserDTO> {
-	id = new serializers.NumberField({ readonly: true });
-	username = new serializers.StringField({ readonly: true });
-	email = new serializers.StringField({ readonly: true });
-	display_name = new serializers.StringField({ readonly: true });
-	date_joined = new serializers.DateField({ readonly: true });
-	notes = new serializers.StringField({});
-	phone = new serializers.StringField({});
-	// TS limutation, in this case you need to pass T, Readonly and Many generics explicitly:
-	roles = new serializers.EnumField<RoleKey, false, true>({ many: true });
-	status = new serializers.EnumField<UserStatusKey, false, false>({});
-	categories = new serializers.EnumField<CategoryKey, false, true>({ many: true });
+  id = new serializers.NumberField({ readonly: true });
+  username = new serializers.StringField({ readonly: true });
+  email = new serializers.StringField({ readonly: true });
+  display_name = new serializers.StringField({ readonly: true });
+  date_joined = new serializers.DateField({ readonly: true });
+  notes = new serializers.StringField({ many: true, optional: true });
+  phone = new serializers.StringField({ optional: true });
+  // TS limutation, in this case you need to pass T, Readonly, Many and Optional generics explicitly, if their value isn't 'false':
+  roles = new serializers.EnumField<RoleKey, false, true>({ many: true });
+  status = new serializers.EnumField<UserStatusKey>();
+  categories = new serializers.EnumField<CategoryKey, false, true, true>({ many: true, optional: true });
 }
 ```
 
@@ -110,8 +109,8 @@ import { PublicUserAPI } from "./api";
 import { PublicUserSerializer } from "./serializers";
 
 export class PublicUserApiRepository extends repositories.APIRepository {
-	api = new PublicUserAPI();
-	serializer = new PublicUserSerializer();
+  api = new PublicUserAPI();
+  serializer = new PublicUserSerializer();
 }
 ```
 
