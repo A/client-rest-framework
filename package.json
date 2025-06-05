@@ -10,7 +10,13 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch"
   },
   "engines": {
     "node": ">=10"
@@ -38,6 +44,7 @@
     "jest": "^29.4.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",
+    "standard-version": "^9.5.0",
     "ts-jest": "^29.0.5",
     "ts-node": "^9.0.0",
     "tsafe": "^1.4.3",
