@@ -5,7 +5,7 @@
 export class BaseSerializer<
   R extends boolean = false,
   M extends boolean = false,
-  O extends boolean = false,
+  O extends boolean = false
 > {
   readonly readonly: R;
   readonly many: M;
@@ -21,7 +21,11 @@ export class BaseSerializer<
       optional?: O;
     } = {}
   ) {
-    Object.assign(this, { many: false, readonly: false, optional: false }, options);
+    Object.assign(
+      this,
+      { many: false, readonly: false, optional: false },
+      options
+    );
   }
 
   /** Converts data transfer objects into models */

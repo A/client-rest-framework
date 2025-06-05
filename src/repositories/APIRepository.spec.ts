@@ -2,8 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
 
 import { repositories, serializers } from '..';
-import { RESTAPI } from '../api';
 import { pagination } from '..';
+import { RESTAPI } from '../api';
 
 const USER = {
   name: 'Anton',
@@ -35,27 +35,27 @@ class HTTPClient {
   get = jest.fn(async () => {
     await sleep(20);
     return { data: USER };
-  })
+  });
   post = jest.fn(async () => {
     await sleep(20);
     return { data: USER };
-  })
+  });
   patch = jest.fn(async () => {
     await sleep(20);
     return { data: USER };
-  })
+  });
   delete = jest.fn(async () => {
     await sleep(20);
     return;
-  })
+  });
 }
 
-const client = new HTTPClient()
+const client = new HTTPClient();
 
 class API<DTO> extends RESTAPI<DTO> {
-  pagination = new pagination.PageNumberPagination<DTO>()
-  client = client
-};
+  pagination = new pagination.PageNumberPagination<DTO>();
+  client = client;
+}
 
 describe('Repositories', () => {
   class UserSerializer<
@@ -110,11 +110,11 @@ describe('Repositories', () => {
     it('`repo.list` should return paginated parsed model', async () => {
       client.get.mockImplementationOnce(async () => {
         await sleep(20);
-        return { data: { results: [USER], count: 1 } } as any
-      })
+        return { data: { results: [USER], count: 1 } } as any;
+      });
 
       const repo = new UserRepository();
-      const [users, meta] = await repo.list()
+      const [users, meta] = await repo.list();
       assert<Equals<typeof users, User[]>>();
       assert<Equals<typeof meta, { count: number }>>();
     });
@@ -132,7 +132,7 @@ describe('Repositories', () => {
     });
   });
 
-  describe("Basic", () => {
+  describe('Basic', () => {
     it('`repo.get`', async () => {
       const repo = new UserRepository();
       const spy = jest.spyOn(repo.api, 'get');
@@ -145,7 +145,9 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(spy).toBeCalledWith(expect.objectContaining({ urlParams: { pk: 2 } }));
+      expect(spy).toBeCalledWith(
+        expect.objectContaining({ urlParams: { pk: 2 } })
+      );
     });
 
     it('`repo.create`', async () => {
@@ -162,7 +164,9 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(spy).toBeCalledWith(expect.objectContaining({ data: { name: "Anton", email: "anton" } }));
+      expect(spy).toBeCalledWith(
+        expect.objectContaining({ data: { name: 'Anton', email: 'anton' } })
+      );
     });
 
     it('`repo.list`', async () => {
@@ -170,18 +174,20 @@ describe('Repositories', () => {
       const spy = jest.spyOn(repo.api, 'get');
       client.get.mockImplementationOnce(async () => {
         await sleep(20);
-        return { data: { results: [USER], count: 1 } } as any
-      })
+        return { data: { results: [USER], count: 1 } } as any;
+      });
 
       const users = await repo.list(1);
 
       expect(users).toEqual([
-        [{
-          name: 'Anton',
-          email: 'anton@anton.org',
-          created_at: new Date('2023-02-11T14:52:14.565Z'),
-        }],
-        { count: 1, },
+        [
+          {
+            name: 'Anton',
+            email: 'anton@anton.org',
+            created_at: new Date('2023-02-11T14:52:14.565Z'),
+          },
+        ],
+        { count: 1 },
       ]);
 
       expect(spy).toBeCalled();
@@ -200,23 +206,27 @@ describe('Repositories', () => {
         created_at: new Date('2023-02-11T14:52:14.565Z'),
       });
 
-      expect(spy).toBeCalledWith(expect.objectContaining({
-        urlParams: { pk: 1 },
-        data: { name: 'Fin' },
-      }));
+      expect(spy).toBeCalledWith(
+        expect.objectContaining({
+          urlParams: { pk: 1 },
+          data: { name: 'Fin' },
+        })
+      );
     });
 
     it('`repo.delete`', async () => {
       const repo = new UserRepository();
       const spy = jest.spyOn(repo.api, 'delete');
       expect(await repo.delete(1)).toBeUndefined();
-      expect(spy).toBeCalledWith(expect.objectContaining({
-        urlParams: { pk: 1 },
-      }));
+      expect(spy).toBeCalledWith(
+        expect.objectContaining({
+          urlParams: { pk: 1 },
+        })
+      );
     });
   });
 
-  describe("Request Config", () => {
+  describe('Request Config', () => {
     it('`repo.get` should support request configuration', async () => {
       const repo = new UserRepository();
       const config = { queryParams: { a: 420 } };
@@ -238,8 +248,8 @@ describe('Repositories', () => {
       const config = { queryParams: { a: 420 } };
       client.get.mockImplementationOnce(async () => {
         await sleep(20);
-        return { data: { results: [USER], count: 1 } } as any
-      })
+        return { data: { results: [USER], count: 1 } } as any;
+      });
 
       await repo.list(1, config);
 
@@ -257,8 +267,8 @@ describe('Repositories', () => {
       const config = { queryParams: { a: 420, page_size: 20 } };
       client.get.mockImplementationOnce(async () => {
         await sleep(20);
-        return { data: { results: [USER], count: 1 } } as any
-      })
+        return { data: { results: [USER], count: 1 } } as any;
+      });
 
       await repo.list(5, config);
 
@@ -275,10 +285,13 @@ describe('Repositories', () => {
       const config = { queryParams: { a: 420 } };
       const spy = jest.spyOn(repo.api, 'create');
 
-      await repo.create({
-        name: 'Anton',
-        email: 'anton',
-      }, config);
+      await repo.create(
+        {
+          name: 'Anton',
+          email: 'anton',
+        },
+        config
+      );
 
       expect(spy).toBeCalledWith({
         urlParams: {},
@@ -296,9 +309,13 @@ describe('Repositories', () => {
       const spy = jest.spyOn(repo.api, 'update');
       const config = { queryParams: { a: 420 } };
 
-      await repo.update(1, {
-        name: 'Anton',
-      }, config);
+      await repo.update(
+        1,
+        {
+          name: 'Anton',
+        },
+        config
+      );
 
       expect(spy).toBeCalledWith({
         urlParams: { pk: 1 },
@@ -324,5 +341,160 @@ describe('Repositories', () => {
         data: null,
       });
     });
-  })
+  });
+});
+
+describe('Repository Mixin Method Availability', () => {
+  class UserSerializer extends serializers.ModelSerializer<UserDTO> {
+    name = new serializers.StringField();
+    email = new serializers.StringField();
+    created_at = new serializers.DateField();
+  }
+
+  const api = new API<UserDTO>();
+  const serializer = new UserSerializer();
+
+  describe('RetrieveOnlyRepository', () => {
+    class TestRepo extends repositories.RetrieveOnlyRepository {
+      api = api;
+      serializer = serializer;
+    }
+
+    it('should only have get method', () => {
+      const repo = new TestRepo();
+
+      expect(typeof repo.get).toBe('function');
+      expect((repo as any).create).toBeUndefined();
+      expect((repo as any).list).toBeUndefined();
+      expect((repo as any).update).toBeUndefined();
+      expect((repo as any).delete).toBeUndefined();
+    });
+  });
+
+  describe('CreateOnlyRepository', () => {
+    class TestRepo extends repositories.CreateOnlyRepository {
+      api = api;
+      serializer = serializer;
+    }
+
+    it('should only have create method', () => {
+      const repo = new TestRepo();
+
+      expect(typeof repo.create).toBe('function');
+      expect((repo as any).get).toBeUndefined();
+      expect((repo as any).list).toBeUndefined();
+      expect((repo as any).update).toBeUndefined();
+      expect((repo as any).delete).toBeUndefined();
+    });
+  });
+
+  describe('ListOnlyRepository', () => {
+    class TestRepo extends repositories.ListOnlyRepository {
+      api = api;
+      serializer = serializer;
+    }
+
+    it('should only have list method', () => {
+      const repo = new TestRepo();
+
+      expect(typeof repo.list).toBe('function');
+      expect((repo as any).get).toBeUndefined();
+      expect((repo as any).create).toBeUndefined();
+      expect((repo as any).update).toBeUndefined();
+      expect((repo as any).delete).toBeUndefined();
+    });
+  });
+
+  describe('ReadOnlyRepository', () => {
+    class TestRepo extends repositories.ReadOnlyRepository {
+      api = api;
+      serializer = serializer;
+    }
+
+    it('should have get and list methods only', () => {
+      const repo = new TestRepo();
+
+      expect(typeof repo.get).toBe('function');
+      expect(typeof repo.list).toBe('function');
+      expect((repo as any).create).toBeUndefined();
+      expect((repo as any).update).toBeUndefined();
+      expect((repo as any).delete).toBeUndefined();
+    });
+  });
+
+  describe('ModelRepository', () => {
+    class TestRepo extends repositories.ModelRepository {
+      api = api;
+      serializer = serializer;
+    }
+
+    it('should have all CRUD methods', () => {
+      const repo = new TestRepo();
+
+      expect(typeof repo.create).toBe('function');
+      expect(typeof repo.get).toBe('function');
+      expect(typeof repo.list).toBe('function');
+      expect(typeof repo.update).toBe('function');
+      expect(typeof repo.delete).toBe('function');
+    });
+  });
+
+  describe('Custom Mixin Composition', () => {
+    it('should support manual mixin composition', () => {
+      class ListDeleteRepo extends repositories.mixins.DestroyMixin(
+        repositories.mixins.ListMixin(repositories.BaseRepository)
+      ) {
+        api = api;
+        serializer = serializer;
+      }
+
+      const repo = new ListDeleteRepo();
+
+      expect(typeof repo.list).toBe('function');
+      expect(typeof repo.delete).toBe('function');
+      expect((repo as any).get).toBeUndefined();
+      expect((repo as any).create).toBeUndefined();
+      expect((repo as any).update).toBeUndefined();
+    });
+
+    it('should support triple mixin composition', () => {
+      class WriteOnlyRepo extends repositories.mixins.DestroyMixin(
+        repositories.mixins.UpdateMixin(
+          repositories.mixins.CreateMixin(repositories.BaseRepository)
+        )
+      ) {
+        api = api;
+        serializer = serializer;
+      }
+
+      const repo = new WriteOnlyRepo();
+
+      expect(typeof repo.create).toBe('function');
+      expect(typeof repo.update).toBe('function');
+      expect(typeof repo.delete).toBe('function');
+      expect((repo as any).get).toBeUndefined();
+      expect((repo as any).list).toBeUndefined();
+    });
+  });
+
+  describe('Backward Compatibility', () => {
+    it('APIRepository should be alias for ModelRepository', () => {
+      expect(repositories.APIRepository).toBe(repositories.ModelRepository);
+    });
+
+    it('APIRepository should have all CRUD methods', () => {
+      class LegacyRepo extends repositories.APIRepository {
+        api = api;
+        serializer = serializer;
+      }
+
+      const repo = new LegacyRepo();
+
+      expect(typeof repo.create).toBe('function');
+      expect(typeof repo.get).toBe('function');
+      expect(typeof repo.list).toBe('function');
+      expect(typeof repo.update).toBe('function');
+      expect(typeof repo.delete).toBe('function');
+    });
+  });
 });
