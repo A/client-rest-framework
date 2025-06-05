@@ -9,11 +9,11 @@
 
 * [Introduction](#introduction)
 * [Installation](#installation)
-* [Quick Start](#quick-start)
+* [Quick Start](#quickstart)
 * [API](#api)
 * [Serializers](#serializers)
 * [Repository](#repository)
-* [Repository Types](#repository-types)
+* [Repository Types](#repositorytypes)
 
 ## Introduction
 
