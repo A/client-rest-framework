@@ -11,9 +11,14 @@ describe('BooleanField', () => {
   });
 
   it('should properly set options as consts', () => {
-    const serializer = new BooleanField({ many: true, readonly: true });
+    const serializer = new BooleanField({
+      many: true,
+      readonly: true,
+      optional: true,
+    });
     assert<Equals<(typeof serializer)['readonly'], true>>();
     assert<Equals<(typeof serializer)['many'], true>>();
+    assert<Equals<(typeof serializer)['optional'], true>>();
   });
 
   it.each([
@@ -36,4 +41,3 @@ describe('BooleanField', () => {
     expect(res).toEqual(expected);
   });
 });
-

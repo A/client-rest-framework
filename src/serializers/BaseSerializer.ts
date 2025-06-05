@@ -4,20 +4,24 @@
  */
 export class BaseSerializer<
   R extends boolean = false,
-  Many extends boolean = false
+  M extends boolean = false,
+  O extends boolean = false,
 > {
   readonly readonly: R;
-  readonly many: Many;
+  readonly many: M;
+  readonly optional: O;
 
   constructor(
     options: {
       /** Ignore serialized property in requests to a server */
       readonly?: R;
       /** Apply serializer to an array of values */
-      many?: Many;
+      many?: M;
+      /** Nullable field */
+      optional?: O;
     } = {}
   ) {
-    Object.assign(this, { many: false, readonly: false }, options);
+    Object.assign(this, { many: false, readonly: false, optional: false }, options);
   }
 
   /** Converts data transfer objects into models */

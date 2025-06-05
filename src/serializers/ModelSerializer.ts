@@ -2,7 +2,7 @@ import { BaseSerializer } from './BaseSerializer';
 
 type KnownKeys<T> = {
   [K in keyof T]: string extends K ? never : number extends K ? never : K;
-}[Exclude<keyof T, 'toDTO' | 'fromDTO' | 'readonly' | 'many'>];
+}[Exclude<keyof T, 'toDTO' | 'fromDTO' | 'readonly' | 'many' | 'optional'>];
 
 type NoUndefinedField<T> = {
   [P in keyof T]-?: NoUndefinedField<NonNullable<T[P]>>;
@@ -18,13 +18,21 @@ type SerializedDTOResult<Serializer extends Record<string, any>> =
     [Key in KnownKeys<Serializer>]: Serializer[Key]['readonly'] extends true
       ? undefined
       : Serializer[Key]['many'] extends true
-      ? ReturnType<Serializer[Key]['toDTO']>[]
-      : ReturnType<Serializer[Key]['toDTO']>;
+      ? Serializer[Key]['optional'] extends true
+        ? ReturnType<Serializer[Key]['fromDTO']>[] | null
+        : ReturnType<Serializer[Key]['fromDTO']>[]
+      : Serializer[Key]['optional'] extends true
+      ? ReturnType<Serializer[Key]['fromDTO']> | null
+      : ReturnType<Serializer[Key]['fromDTO']>;
   }>;
 
 type SerializedModelResult<Serializer extends Record<string, any>> = {
   [Key in KnownKeys<Serializer>]: Serializer[Key]['many'] extends true
-    ? ReturnType<Serializer[Key]['fromDTO']>[]
+    ? Serializer[Key]['optional'] extends true
+      ? ReturnType<Serializer[Key]['fromDTO']>[] | null
+      : ReturnType<Serializer[Key]['fromDTO']>[]
+    : Serializer[Key]['optional'] extends true
+    ? ReturnType<Serializer[Key]['fromDTO']> | null
     : ReturnType<Serializer[Key]['fromDTO']>;
 };
 
@@ -33,7 +41,11 @@ export type ToDTOPayload<Serializer extends Record<string, any>> = OmitByValue<
     [Key in KnownKeys<Serializer>]: Serializer[Key]['readonly'] extends true
       ? undefined
       : Serializer[Key]['many'] extends true
-      ? ReturnType<Serializer[Key]['fromDTO']>[]
+      ? Serializer[Key]['optional'] extends true
+        ? ReturnType<Serializer[Key]['fromDTO']>[] | null | undefined
+        : ReturnType<Serializer[Key]['fromDTO']>[]
+      : Serializer[Key]['optional'] extends true
+      ? ReturnType<Serializer[Key]['fromDTO']> | null | undefined
       : ReturnType<Serializer[Key]['fromDTO']>;
   },
   undefined
@@ -42,7 +54,8 @@ export type ToDTOPayload<Serializer extends Record<string, any>> = OmitByValue<
 export class ModelSerializer<
   DTOItem = Record<string, any>,
   R extends boolean = false,
-  M extends boolean = false
+  M extends boolean = false,
+  O extends boolean = false
 > extends BaseSerializer<R, M> {
   public fromDTO = (data: DTOItem): SerializedModelResult<this> => {
     const result: any = {};
@@ -53,7 +66,7 @@ export class ModelSerializer<
         );
         continue;
       }
-      const serializer = this[key as keyof this] as BaseSerializer<R, M>;
+      const serializer = this[key as keyof this] as BaseSerializer<R, M, O>;
       if (serializer.many) {
         result[key] = (data[key] as any).map(serializer.fromDTO);
         continue;
@@ -66,11 +79,11 @@ export class ModelSerializer<
   public toDTO = (data: ToDTOPayload<this>): SerializedDTOResult<this> => {
     const result: any = {};
     for (const key in data) {
-      const serializer = this[key as keyof this] as BaseSerializer<R, M>;
+      const serializer = this[key as keyof this] as BaseSerializer<R, M, O>;
 
       if (!serializer) {
-        console.warn(`Serializer hasn't been found for field "${key}"`)
-        continue
+        console.warn(`Serializer hasn't been found for field "${key}"`);
+        continue;
       }
 
       if (serializer.readonly) {

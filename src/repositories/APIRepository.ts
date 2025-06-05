@@ -1,4 +1,4 @@
-import { RequestContext } from '../types/RequestContext';
+import { RequestContextBuilder, RequestContext } from '../lib/RequestContextBuilder';
 
 export interface WithPagination<T> {
   results: T[];
@@ -6,7 +6,6 @@ export interface WithPagination<T> {
 }
 
 interface IAPI {
-  createRequestContext(...args: Partial<RequestContext>[]): RequestContext
   get(context: RequestContext): any
   list(context: RequestContext): any
   create(context: RequestContext): any
@@ -22,16 +21,19 @@ interface ISerializer {
   toDTO: (arg: any) => any;
 }
 
+type PK = number | string;
+
 export class APIRepository {
   api: IAPI;
   serializer: ISerializer;
+  requestContextBuilder = new RequestContextBuilder();
 
   public async create(
     raw: Parameters<this['serializer']['toDTO']>[0],
     config: Partial<RequestContext> = {}
   ): Promise<ReturnType<this['serializer']['fromDTO']>> {
     const data = this.serializer.toDTO(raw);
-    const context = this.api.createRequestContext(config, { data })
+    const context = this.requestContextBuilder.create(config, { data })
     const response = await this.api.create(context);
     return this.serializer.fromDTO(response);
   }
@@ -40,7 +42,7 @@ export class APIRepository {
     pk: number,
     config: Partial<RequestContext> = {}
   ): Promise<ReturnType<this['serializer']['fromDTO']>> {
-    const context = this.api.createRequestContext(
+    const context = this.requestContextBuilder.create(
       { urlParams: { pk } },
       config
     );
@@ -53,19 +55,19 @@ export class APIRepository {
     config: Partial<RequestContext> = {}
   ) {
     type SerializedItem = ReturnType<this['serializer']['fromDTO']>
-    const context = this.api.createRequestContext({ pagination: { page } }, config)
+    const context = this.requestContextBuilder.create({ pagination: { page } }, config)
     const { items, ...meta } = await this.api.list(context) as Awaited<ReturnType<this['api']['list']>>
     const serializedItems = items.map(this.serializer.fromDTO) as SerializedItem[]
     return [serializedItems, meta] as [SerializedItem[], typeof meta]
   }
 
   public async update(
-    pk: number,
+    pk: PK,
     diff: Partial<Parameters<this['serializer']['toDTO']>[0]>,
     config: Partial<RequestContext> = {}
   ): Promise<ReturnType<this['serializer']['fromDTO']>> {
     const data = this.serializer.toDTO(diff);
-    const context = this.api.createRequestContext(
+    const context = this.requestContextBuilder.create(
       { urlParams: { pk }, data }, config,
     )
     const response = await this.api.update(context);
@@ -73,10 +75,10 @@ export class APIRepository {
   }
 
   public async delete(
-    pk: number,
+    pk: PK,
     config: Partial<RequestContext> = {}
   ) {
-    const context = this.api.createRequestContext(
+    const context = this.requestContextBuilder.create(
       { urlParams: { pk } }, config,
     )
     await this.api.delete(context);
