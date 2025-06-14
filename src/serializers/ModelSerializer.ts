@@ -1,4 +1,8 @@
+import debug from 'debug';
+
 import { BaseSerializer } from './BaseSerializer';
+
+const log = debug('client-rest-framework:modelSerializer');
 
 type KnownKeys<T> = {
   [K in keyof T]: string extends K ? never : number extends K ? never : K;
@@ -61,16 +65,23 @@ export class ModelSerializer<
     const result: any = {};
     for (const key in data) {
       if (!this[key as keyof this]) {
-        console.warn(
+        log(
           `${this.constructor.name} received a strange key \`${key}\` without any serializer configured`
         );
         continue;
       }
       const serializer = this[key as keyof this] as BaseSerializer<R, M, O>;
+
+      if (serializer.optional && data[key] === null) {
+        result[key] = null
+        continue
+      }
+
       if (serializer.many) {
         result[key] = (data[key] as any).map(serializer.fromDTO);
         continue;
       }
+
       result[key] = serializer.fromDTO(data[key]);
     }
     return result;
@@ -82,7 +93,7 @@ export class ModelSerializer<
       const serializer = this[key as keyof this] as BaseSerializer<R, M, O>;
 
       if (!serializer) {
-        console.warn(`Serializer hasn't been found for field "${key}"`);
+        log(`Serializer hasn't been found for field "${key}"`);
         continue;
       }
 

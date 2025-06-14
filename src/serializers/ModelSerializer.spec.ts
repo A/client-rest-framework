@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { assert, Equals } from 'tsafe';
 
 import { BaseSerializer } from './BaseSerializer';
@@ -79,6 +79,26 @@ describe('ModelSerializer', () => {
     assert<Equals<ParametersType, ToDTOUserParameter>>();
   });
 
+  it('should return correct optional response', () => {
+    const serializer = new class TestSerializer extends ModelSerializer {
+      opt_string = new StringField({ optional: true });
+      opt_number = new NumberField({ optional: true });
+      opt_array = new StringField({ many: true, optional: true });
+
+    };
+    const data = serializer.fromDTO({
+      opt_string: null,
+      opt_number: null,
+      opt_array: null
+    })
+    expect(data).toEqual({
+      opt_string: null,
+      opt_number: null,
+      opt_array: null
+    })
+  });
+
+
   it('fromDTO', () => {
     const model = new UserSerializer().fromDTO({
       name: 'Anton',
@@ -112,24 +132,5 @@ describe('ModelSerializer', () => {
       score: 420,
       tags: ['paid'],
     });
-  });
-
-  it('toDTO with unknown keys', () => {
-    const consoleWarnMock = jest
-      .spyOn(console, 'warn')
-      .mockImplementation(jest.fn());
-
-    new UserSerializer().toDTO({
-      name: 'Anton',
-      email: 'anton@anton.org',
-      score: '420',
-      unknown: 'value',
-      tags: [{ name: 'paid' }],
-      created_at: new Date('2023-02-11T14:52:14.565Z'),
-    } as any);
-
-    expect(consoleWarnMock).toHaveBeenCalledWith(
-      'Serializer hasn\'t been found for field "unknown"'
-    );
   });
 });
